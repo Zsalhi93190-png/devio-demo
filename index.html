@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devio — Démo électricien</title>
+<style>
+  :root{
+    --navy:#0e1b2e;
+    --navy-2:#13243d;
+    --navy-3:#24416b;
+    --bg:#eef1f6;
+    --card:#ffffff;
+    --ink:#14233b;
+    --ink-soft:#5b6b82;
+    --line:#e2e7f0;
+    --accent:#ffc400;      /* jaune électricité */
+    --accent-2:#ff7a1a;    /* orange */
+    --green:#15a85a;
+    --green-soft:#e7f6ee;
+    --red:#e3534b;
+    --blue:#2f6df6;
+    --shadow:0 10px 30px rgba(16,30,54,.10);
+    --shadow-sm:0 3px 10px rgba(16,30,54,.07);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    display:flex;flex-direction:column;min-height:100vh;
+  }
+
+  /* ---------- Top bar ---------- */
+  header.topbar{
+    height:62px;background:var(--navy);color:#fff;
+    display:flex;align-items:center;gap:18px;padding:0 22px;flex-shrink:0;
+  }
+  .logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:20px;letter-spacing:-.4px}
+  .logo .bolt{
+    width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    display:flex;align-items:center;justify-content:center;color:var(--navy);font-size:18px;
+  }
+  .logo span b{color:var(--accent)}
+  .topbar .sep{width:1px;height:26px;background:#ffffff22}
+  .biz{display:flex;align-items:center;gap:9px;font-size:13.5px;color:#c7d2e3}
+  .biz .ava{width:26px;height:26px;border-radius:50%;background:#26405f;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:700;font-size:12px}
+  .topbar .spacer{flex:1}
+  .demo-badge{font-size:11.5px;font-weight:700;color:var(--navy);background:var(--accent);
+    padding:5px 11px;border-radius:20px;letter-spacing:.3px}
+
+  /* ---------- Layout ---------- */
+  .app{display:flex;flex:1;min-height:0}
+  nav.side{
+    width:236px;background:var(--navy-2);flex-shrink:0;padding:18px 14px;display:flex;flex-direction:column;gap:5px;
+  }
+  nav.side .cap{color:#7d90ad;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin:6px 10px 10px}
+  .navitem{
+    display:flex;align-items:center;gap:12px;color:#c7d2e3;padding:11px 12px;border-radius:10px;cursor:pointer;
+    font-size:14.5px;font-weight:600;transition:.15s;position:relative;
+  }
+  .navitem .ic,.navitem .badge{flex-shrink:0}
+  .navitem .ic{width:20px;text-align:center;font-size:16px;opacity:.9}
+  .navitem:hover{background:#ffffff0e}
+  .navitem.active{background:linear-gradient(90deg,#ffffff18,#ffffff05);color:#fff}
+  .navitem.active::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:var(--accent)}
+  .navitem .badge{margin-left:auto;background:var(--accent-2);color:#fff;font-size:11px;font-weight:800;
+    min-width:19px;height:19px;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+  nav.side .foot{margin-top:auto;color:#62748f;font-size:11.5px;padding:10px;line-height:1.5}
+
+  main.stage{flex:1;overflow-y:auto;padding:30px 36px 120px}
+  .screen{display:none;max-width:920px;margin:0 auto;animation:fade .35s ease}
+  .screen.show{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .screen-head{margin-bottom:20px}
+  .screen-head h1{font-size:23px;letter-spacing:-.5px}
+  .screen-head p{color:var(--ink-soft);font-size:14px;margin-top:4px}
+
+  /* ---------- Reveal animation ---------- */
+  .reveal{opacity:0;transform:translateY(12px);transition:opacity .5s ease,transform .5s ease;pointer-events:none}
+  .reveal.on{opacity:1;transform:none;pointer-events:auto}
+
+  /* ---------- Cards ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-sm);padding:20px 22px;margin-bottom:18px}
+  .card.flush{padding:0;overflow:hidden}
+
+  /* ---------- Inbox ---------- */
+  .inbox-row{display:flex;gap:14px;padding:18px 22px;border-bottom:1px solid var(--line);cursor:pointer;transition:.15s;align-items:flex-start}
+  .inbox-row:last-child{border-bottom:none}
+  .inbox-row:hover{background:#f8fafd}
+  .inbox-row.unread{background:#fffdf3}
+  .inbox-row .who-ava{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+    font-weight:700;color:#fff;font-size:15px}
+  .inbox-row .body{flex:1;min-width:0}
+  .inbox-row .l1{display:flex;align-items:center;gap:8px}
+  .inbox-row .name{font-weight:700;font-size:14.5px}
+  .inbox-row .time{margin-left:auto;color:var(--ink-soft);font-size:12.5px;flex-shrink:0}
+  .inbox-row .subj{font-size:13.5px;margin-top:2px}
+  .inbox-row .prev{color:var(--ink-soft);font-size:13px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pill{font-size:11px;font-weight:800;padding:3px 9px;border-radius:20px;letter-spacing:.2px}
+  .pill.new{background:var(--accent);color:var(--navy)}
+  .pill.green{background:var(--green-soft);color:var(--green)}
+  .pill.grey{background:#eef1f6;color:var(--ink-soft)}
+  .pill.blue{background:#e8f0ff;color:var(--blue)}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--accent-2);flex-shrink:0}
+
+  /* ---------- Lead ---------- */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  .lbl{font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-soft);margin-bottom:13px}
+  .kv{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  .kv:last-child{border-bottom:none}
+  .kv .k{color:var(--ink-soft);width:118px;flex-shrink:0}
+  .kv .v{font-weight:600}
+  .kv .v .miss{color:var(--accent-2);font-weight:700}
+  .score{display:flex;align-items:center;gap:14px;background:var(--green-soft);border:1px solid #bfe6cd;border-radius:12px;padding:13px 16px;margin-bottom:16px}
+  .score .big{font-size:26px}
+  .score .t b{display:block;color:var(--green);font-size:15px}
+  .score .t span{font-size:12.5px;color:#3d6b50}
+
+  /* chat bubbles */
+  .msg{margin:0 0 12px}
+  .msg .meta{font-size:11.5px;color:var(--ink-soft);margin-bottom:5px;display:flex;align-items:center;gap:7px}
+  .bubble{padding:12px 15px;border-radius:14px;font-size:13.5px;line-height:1.5;max-width:90%}
+  .msg.out .bubble{background:var(--navy);color:#eaf0f8;border-bottom-left-radius:4px}
+  .msg.out .sig{margin-top:8px;font-size:12px;color:#aebfd6}
+  .msg.in{display:flex;flex-direction:column;align-items:flex-end}
+  .msg.in .bubble{background:#eef2f8;border-bottom-right-radius:4px}
+  .msg.in .meta{align-self:flex-end}
+  .auto-tag{font-size:10.5px;font-weight:800;color:var(--accent-2);background:#fff2e6;padding:2px 7px;border-radius:6px;letter-spacing:.3px}
+
+  /* devis table */
+  .devis-head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .devis-head h3{font-size:16px}
+  table.devis{width:100%;border-collapse:collapse;margin-top:8px;font-size:13.5px}
+  table.devis th{text-align:left;color:var(--ink-soft);font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;padding:8px 6px;border-bottom:2px solid var(--line)}
+  table.devis td{padding:11px 6px;border-bottom:1px solid var(--line)}
+  table.devis td.num,table.devis th.num{text-align:right;white-space:nowrap}
+  table.devis tr.sum td{border-bottom:none;font-weight:600}
+  table.devis tr.total td{border-top:2px solid var(--navy);font-weight:800;font-size:15.5px;padding-top:13px}
+  .note{background:#fffdf3;border:1px solid #f2e4b0;border-radius:10px;padding:11px 14px;font-size:12.5px;color:#7a6516;margin-top:14px;display:flex;gap:9px}
+  .sent-banner{display:flex;align-items:center;gap:12px;background:var(--green-soft);border:1px solid #bfe6cd;border-radius:12px;padding:14px 16px;color:#1c6e41;font-weight:600;font-size:14px;margin-top:16px}
+  .sent-banner .chk{width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+  /* ---------- Timeline ---------- */
+  .timeline{position:relative;padding-left:8px}
+  .tl{position:relative;padding:0 0 6px 34px;margin-bottom:4px}
+  .tl::before{content:"";position:absolute;left:9px;top:26px;bottom:-6px;width:2px;background:var(--line)}
+  .tl:last-child::before{display:none}
+  .tl .node{position:absolute;left:0;top:2px;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:11px}
+  .tl.done .node{background:var(--navy);border-color:var(--navy);color:#fff}
+  .tl.relance .node{background:var(--accent);border-color:var(--accent);color:var(--navy)}
+  .tl.reply .node{background:var(--green);border-color:var(--green);color:#fff}
+  .tl.book .node{background:var(--blue);border-color:var(--blue);color:#fff}
+  .tl .day{font-size:11.5px;font-weight:800;color:var(--ink-soft);letter-spacing:.3px}
+  .tl .ev{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 15px;margin-top:6px;box-shadow:var(--shadow-sm)}
+  .tl .ev .h{font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .tl .ev .txt{font-size:13px;color:var(--ink-soft);margin-top:5px;line-height:1.5}
+  .stopped{display:inline-flex;align-items:center;gap:7px;background:var(--green-soft);color:var(--green);font-weight:700;font-size:12.5px;padding:6px 11px;border-radius:8px}
+  .slots{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .slot{border:1.5px solid var(--line);border-radius:10px;padding:9px 13px;font-size:13px;font-weight:600;text-align:center;transition:.2s}
+  .slot.picked{border-color:var(--blue);background:#e8f0ff;color:var(--blue)}
+  .slot small{display:block;color:var(--ink-soft);font-weight:500;font-size:11px;margin-top:2px}
+  .slot.picked small{color:var(--blue)}
+
+  /* ---------- ROI ---------- */
+  .roi-hero{display:grid;grid-template-columns:1.3fr 1fr;gap:18px}
+  .roi-money{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;border-radius:18px;padding:24px 26px;box-shadow:var(--shadow)}
+  .roi-money .cap{font-size:12.5px;color:#9fb2cd;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+  .roi-money .amount{font-size:46px;font-weight:850;letter-spacing:-1.5px;margin:6px 0 2px;color:var(--accent)}
+  .roi-money .sub{font-size:13.5px;color:#c7d2e3}
+  .roi-money .yr{margin-top:14px;font-size:13px;color:#fff;background:#ffffff14;border-radius:10px;padding:9px 13px;display:inline-block}
+  .roi-side{display:flex;flex-direction:column;gap:14px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow-sm)}
+  .stat .n{font-size:25px;font-weight:800;letter-spacing:-.5px}
+  .stat .n.green{color:var(--green)}
+  .stat .c{font-size:12.5px;color:var(--ink-soft);margin-top:2px;font-weight:600}
+  .payback{display:flex;align-items:center;gap:12px;background:#fff7e6;border:1px solid #f0dca6;border-radius:14px;padding:15px 18px;margin-top:18px;font-size:14.5px}
+  .payback .star{font-size:22px}
+  .payback b{color:#9a6b00}
+  .sliders{margin-top:20px}
+  .sliders h3{font-size:15px;margin-bottom:4px}
+  .sliders .hint{font-size:12.5px;color:var(--ink-soft);margin-bottom:16px}
+  .sl-row{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+  .sl-row label{width:200px;flex-shrink:0;font-size:13.5px;font-weight:600}
+  .sl-row input[type=range]{flex:1;accent-color:var(--accent-2);height:6px}
+  .sl-row .out{width:96px;text-align:right;font-weight:800;font-size:16px;color:var(--navy)}
+  .calc-note{font-size:11.5px;color:var(--ink-soft);margin-top:8px;line-height:1.5}
+
+  /* ---------- Control bar ---------- */
+  .control{
+    position:fixed;left:50%;bottom:22px;transform:translateX(-50%);
+    background:var(--navy);color:#fff;border-radius:16px;box-shadow:0 16px 40px rgba(10,20,40,.35);
+    display:flex;align-items:center;gap:18px;padding:12px 14px 12px 20px;z-index:50;min-width:520px;
+  }
+  .control .step-info{display:flex;flex-direction:column;gap:2px}
+  .control .step-no{font-size:11px;color:#8aa0bf;font-weight:700;letter-spacing:.5px}
+  .control .step-hint{font-size:14px;font-weight:600}
+  .control .spacer{flex:1}
+  .btn{
+    border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:14.5px;border-radius:11px;padding:13px 20px;transition:.15s;white-space:nowrap;
+    display:flex;align-items:center;gap:8px;
+  }
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:var(--navy)}
+  .btn.primary:hover{filter:brightness(1.05);transform:translateY(-1px)}
+  .btn.ghost{background:#ffffff1a;color:#fff}
+  .btn.ghost:hover{background:#ffffff2e}
+  .btn.green{background:var(--green);color:#fff}
+  .btn.green:hover{filter:brightness(1.05);transform:translateY(-1px)}
+  .progress-track{position:fixed;left:0;right:0;bottom:0;height:3px;background:#0000;z-index:51}
+  .progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0;transition:width .4s ease}
+
+  @media(max-width:780px){
+    nav.side{display:none}
+    .grid2,.roi-hero{grid-template-columns:1fr}
+    .control{min-width:0;left:12px;right:12px;transform:none}
+    main.stage{padding:20px 16px 130px}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo"><span class="bolt">⚡</span><span>Dev<b>io</b></span></div>
+  <div class="sep"></div>
+  <div class="biz"><span class="ava">EM</span> Électricité Martin · Saint-Maur</div>
+  <div class="spacer"></div>
+  <div class="demo-badge">DÉMO</div>
+</header>
+
+<div class="app">
+  <nav class="side">
+    <div class="cap">Pilotage</div>
+    <div class="navitem active" data-screen="inbox">
+      <span class="ic">📥</span> Boîte de réception <span class="badge" id="nav-badge">1</span>
+    </div>
+    <div class="navitem" data-screen="lead">
+      <span class="ic">📋</span> Dossier client
+    </div>
+    <div class="navitem" data-screen="relances">
+      <span class="ic">🔄</span> Relances &amp; RDV
+    </div>
+    <div class="navitem" data-screen="roi">
+      <span class="ic">📈</span> Performance
+    </div>
+    <div class="foot">Devio travaille en coulisse.<br>Vous validez, l'agent exécute.</div>
+  </nav>
+
+  <main class="stage">
+
+    <!-- ============ INBOX ============ -->
+    <section class="screen show" id="screen-inbox">
+      <div class="screen-head">
+        <h1>Boîte de réception</h1>
+        <p>Devio capte chaque demande de devis, quel que soit le canal.</p>
+      </div>
+      <div class="card flush">
+        <div class="inbox-row unread" id="inbox-dubois">
+          <div class="who-ava" style="background:#7c5cff">MD</div>
+          <div class="body">
+            <div class="l1">
+              <span class="dot" id="inbox-dot"></span>
+              <span class="name">Mme Dubois</span>
+              <span class="pill new" id="inbox-pill">Nouveau</span>
+              <span class="time">il y a 3 min · e-mail</span>
+            </div>
+            <div class="subj">Demande de devis — tableau électrique &amp; prises</div>
+            <div class="prev">« Bonjour, je viens d'emménager à Saint-Maur. Le tableau électrique semble ancien et je voudrais ajouter des prises… »</div>
+          </div>
+        </div>
+        <div class="inbox-row">
+          <div class="who-ava" style="background:#3aa0a0">PL</div>
+          <div class="body">
+            <div class="l1"><span class="name">P. Lemoine</span><span class="pill green">RDV pris</span><span class="time">hier</span></div>
+            <div class="subj">Remplacement interrupteurs cuisine</div>
+            <div class="prev">Devis signé — intervention prévue lundi.</div>
+          </div>
+        </div>
+        <div class="inbox-row">
+          <div class="who-ava" style="background:#b08968">SR</div>
+          <div class="body">
+            <div class="l1"><span class="name">Sté Roux SCI</span><span class="pill grey">Hors secteur</span><span class="time">hier</span></div>
+            <div class="subj">Rénovation complète appartement (Lyon)</div>
+            <div class="prev">Devio a décliné poliment : hors zone d'intervention.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LEAD ============ -->
+    <section class="screen" id="screen-lead">
+      <div class="screen-head">
+        <h1>Dossier — Mme Dubois</h1>
+        <p>Demande qualifiée et pré-chiffrée automatiquement. À vous de valider.</p>
+      </div>
+
+      <div class="reveal" id="rev-qualif">
+        <div class="card">
+          <div class="score">
+            <span class="big">🟢</span>
+            <div class="t"><b>Lead sérieux — à traiter en priorité</b><span>Travaux concrets · dans votre secteur · projet d'emménagement récent</span></div>
+          </div>
+          <div class="grid2">
+            <div>
+              <div class="lbl">Demande structurée</div>
+              <div class="kv"><span class="k">Travaux</span><span class="v">Mise aux normes tableau + ajout de prises</span></div>
+              <div class="kv"><span class="k">Secteur</span><span class="v">Saint-Maur ✅ (dans votre zone)</span></div>
+              <div class="kv"><span class="k">Urgence</span><span class="v">Moyenne · emménagement</span></div>
+              <div class="kv"><span class="k">Canal</span><span class="v">E-mail</span></div>
+            </div>
+            <div>
+              <div class="lbl">Infos manquantes détectées</div>
+              <div class="kv"><span class="k">Âge tableau</span><span class="v"><span class="miss">à préciser →</span></span></div>
+              <div class="kv"><span class="k">Nb de prises</span><span class="v"><span class="miss">à préciser →</span></span></div>
+              <div class="kv"><span class="k">Pièces</span><span class="v">Salon + cuisine</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal" id="rev-clarif">
+        <div class="card">
+          <div class="lbl">Échange avec la cliente</div>
+          <div class="msg out">
+            <div class="meta">Devio, au nom d'Électricité Martin <span class="auto-tag">AUTO</span></div>
+            <div class="bubble">
+              Bonjour Madame Dubois, merci pour votre demande. Pour vous préparer une estimation juste : votre tableau a-t-il plus de 15 ans, et combien de prises souhaitez-vous ajouter exactement (salon / cuisine) ?
+              <div class="sig">— Électricité Martin · 06 12 34 56 78</div>
+            </div>
+          </div>
+          <div class="msg in">
+            <div class="meta">Mme Dubois · réponse en 40 min</div>
+            <div class="bubble">Bonjour, le tableau doit avoir 25 ans. Il me faudrait 4 prises au salon et 2 en cuisine. Merci !</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal" id="rev-devis">
+        <div class="card">
+          <div class="devis-head"><h3>Pré-devis chiffré</h3><span class="pill blue">généré par Devio</span></div>
+          <table class="devis">
+            <thead><tr><th>Prestation</th><th class="num">Qté</th><th class="num">P.U. HT</th><th class="num">Total HT</th></tr></thead>
+            <tbody>
+              <tr><td>Remplacement tableau + mise aux normes NF&nbsp;C&nbsp;15-100</td><td class="num">1</td><td class="num">850 €</td><td class="num">850 €</td></tr>
+              <tr><td>Pose de prise 16A encastrée</td><td class="num">6</td><td class="num">90 €</td><td class="num">540 €</td></tr>
+              <tr><td>Déplacement + petites fournitures</td><td class="num">1</td><td class="num">80 €</td><td class="num">80 €</td></tr>
+              <tr class="sum"><td colspan="3" class="num">Total HT</td><td class="num">1&nbsp;470 €</td></tr>
+              <tr class="sum"><td colspan="3" class="num">TVA 10 %</td><td class="num">147 €</td></tr>
+              <tr class="total"><td colspan="3" class="num">Total TTC</td><td class="num">1&nbsp;617 €</td></tr>
+            </tbody>
+          </table>
+          <div class="note"><span>ℹ️</span><span><b>Estimation indicative</b>, à confirmer après une courte visite technique. Mentions légales et devis ferme générés à votre validation.</span></div>
+        </div>
+        <div class="reveal" id="rev-sent">
+          <div class="sent-banner"><span class="chk">✓</span> Devis validé et envoyé à Mme Dubois — relance automatique programmée.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RELANCES & RDV ============ -->
+    <section class="screen" id="screen-relances">
+      <div class="screen-head">
+        <h1>Relances &amp; rendez-vous</h1>
+        <p>Devio relance tout seul au bon moment — et s'arrête dès que la cliente répond.</p>
+      </div>
+      <div class="card">
+        <div class="timeline">
+
+          <div class="tl done reveal" id="tl-0">
+            <div class="node">✓</div>
+            <div class="day">VEN. 13 JUIN · J0</div>
+            <div class="ev">
+              <div class="h">📄 Devis envoyé à Mme Dubois</div>
+              <div class="txt">Estimation 1&nbsp;617 € TTC transmise par e-mail. Séquence de relance armée (J+3, J+6).</div>
+            </div>
+          </div>
+
+          <div class="tl relance reveal" id="tl-1">
+            <div class="node">⚡</div>
+            <div class="day">LUN. 16 JUIN · J+3</div>
+            <div class="ev">
+              <div class="h">🔄 Relance n°1 envoyée <span class="auto-tag">AUTO</span></div>
+              <div class="txt">« Bonjour Madame Dubois, je me permets de revenir vers vous concernant votre projet électrique. Avez-vous pu consulter l'estimation ? Je peux passer faire un point quand vous voulez. — Électricité Martin »</div>
+            </div>
+          </div>
+
+          <div class="tl reply reveal" id="tl-2">
+            <div class="node">✓</div>
+            <div class="day">JEU. 19 JUIN · J+6</div>
+            <div class="ev">
+              <div class="h">💬 Mme Dubois a répondu</div>
+              <div class="txt">« Bonjour, oui je suis intéressée, on peut convenir d'une visite ? Merci. »</div>
+              <div style="margin-top:10px"><span class="stopped">⏹ Relances suivantes automatiquement annulées</span></div>
+            </div>
+          </div>
+
+          <div class="tl book reveal" id="tl-3">
+            <div class="node">📅</div>
+            <div class="day">JEU. 19 JUIN · prise de RDV</div>
+            <div class="ev">
+              <div class="h">📅 Devio propose une visite technique <span class="auto-tag">AUTO</span></div>
+              <div class="txt">3 créneaux proposés depuis votre agenda :</div>
+              <div class="slots">
+                <div class="slot">Lun. 23 juin<small>9h00</small></div>
+                <div class="slot picked">Mar. 24 juin<small>14h00 ✓ choisi</small></div>
+                <div class="slot">Mer. 25 juin<small>8h30</small></div>
+              </div>
+              <div class="txt" style="margin-top:12px;color:var(--green);font-weight:700">✅ Rendez-vous confirmé — ajouté à votre Google Agenda, rappel envoyé à la cliente.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ROI ============ -->
+    <section class="screen" id="screen-roi">
+      <div class="screen-head">
+        <h1>Ce que Devio vous rapporte</h1>
+        <p>Sur la base de vos chiffres réels — déplacez les curseurs.</p>
+      </div>
+
+      <div class="roi-hero">
+        <div class="roi-money">
+          <div class="cap">Chiffre d'affaires récupéré</div>
+          <div class="amount" id="roi-camois">+2 800 €</div>
+          <div class="sub">par mois, grâce aux devis relancés qui auraient été perdus</div>
+          <div class="yr">Soit <b id="roi-caan">~33 600 €</b> de CA récupéré sur l'année</div>
+        </div>
+        <div class="roi-side">
+          <div class="stat"><div class="n green" id="roi-chantiers">+3,5</div><div class="c">chantiers récupérés / mois</div></div>
+          <div class="stat"><div class="n">12 h</div><div class="c">de tâches non-facturables récupérées / semaine</div></div>
+          <div class="stat"><div class="n">&lt; 2 min</div><div class="c">délai de première réponse aux prospects</div></div>
+        </div>
+      </div>
+
+      <div class="payback"><span class="star">⭐</span><div>Devio se rembourse <b>dès le premier chantier récupéré</b> — tout le reste est du bénéfice net.</div></div>
+
+      <div class="card sliders">
+        <h3>Simulez avec vos chiffres</h3>
+        <div class="hint">Réglez selon votre activité, le calcul se met à jour en direct.</div>
+        <div class="sl-row">
+          <label>Demandes de devis / mois</label>
+          <input type="range" id="sl-dem" min="5" max="60" step="1" value="20">
+          <div class="out" id="out-dem">20</div>
+        </div>
+        <div class="sl-row">
+          <label>Panier moyen (HT)</label>
+          <input type="range" id="sl-pan" min="200" max="5000" step="50" value="800">
+          <div class="out" id="out-pan">800 €</div>
+        </div>
+        <div class="calc-note">
+          Hypothèses prudentes : ~30 % de signature actuelle → le reste part en « clients perdus », dont <b>27 % sont récupérables par une simple relance</b> (votre chiffre). CA récupéré = demandes perdues × 27 % × panier moyen.
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============ CONTROL BAR ============ -->
+<div class="control" id="control">
+  <div class="step-info">
+    <span class="step-no" id="step-no">ÉTAPE 1 / 8</span>
+    <span class="step-hint" id="step-hint">Nouvelle demande de devis reçue</span>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn ghost" id="btn-back">◀</button>
+  <button class="btn primary" id="btn-next">▶ Qualifier la demande</button>
+</div>
+<div class="progress-track"><div class="progress-bar" id="progress"></div></div>
+
+<script>
+const STEPS = [
+  { screen:'inbox',    no:1, hint:"Nouvelle demande de devis reçue",            btn:"▶ Qualifier la demande",       kind:'primary' },
+  { screen:'lead',     no:2, hint:"Demande qualifiée — lead sérieux 🟢",        btn:"▶ Demander les infos manquantes", kind:'primary' },
+  { screen:'lead',     no:3, hint:"La cliente a répondu en 40 min",             btn:"▶ Générer le pré-devis",       kind:'primary' },
+  { screen:'lead',     no:4, hint:"Pré-devis chiffré prêt — à valider",         btn:"✅ Valider & envoyer le devis", kind:'green' },
+  { screen:'relances', no:5, hint:"Devis envoyé — relance programmée",          btn:"⏩ Avancer de 3 jours",         kind:'primary' },
+  { screen:'relances', no:6, hint:"J+3 : relance envoyée automatiquement",      btn:"⏩ Avancer de 3 jours",         kind:'primary' },
+  { screen:'relances', no:7, hint:"La cliente a répondu — relances stoppées",   btn:"▶ Proposer un rendez-vous",    kind:'primary' },
+  { screen:'relances', no:8, hint:"Rendez-vous confirmé à l'agenda",            btn:"▶ Voir le gain pour vous",     kind:'green' },
+  { screen:'roi',      no:8, hint:"Dossier bouclé — voici le résultat",         btn:"↺ Rejouer la démo",            kind:'ghost' },
+];
+
+let step = 0;
+const screens = ['inbox','lead','relances','roi'];
+
+// reveal thresholds: element id -> minimum step index at which it shows
+const REVEALS = {
+  'rev-qualif':1, 'rev-clarif':2, 'rev-devis':3, 'rev-sent':4,
+  'tl-0':4, 'tl-1':5, 'tl-2':6, 'tl-3':7
+};
+
+function showScreen(name){
+  screens.forEach(s=>{
+    document.getElementById('screen-'+s).classList.toggle('show', s===name);
+  });
+  document.querySelectorAll('.navitem').forEach(n=>{
+    n.classList.toggle('active', n.dataset.screen===name);
+  });
+}
+
+function render(){
+  const s = STEPS[step];
+  showScreen(s.screen);
+
+  // reveals
+  for(const [id,thr] of Object.entries(REVEALS)){
+    document.getElementById(id).classList.toggle('on', step>=thr);
+  }
+
+  // inbox status flips once qualified
+  const qualified = step>=1;
+  document.getElementById('inbox-pill').textContent = qualified ? 'En cours' : 'Nouveau';
+  document.getElementById('inbox-pill').className = 'pill ' + (qualified ? 'blue':'new');
+  document.getElementById('inbox-dubois').classList.toggle('unread', !qualified);
+  document.getElementById('inbox-dot').style.visibility = qualified ? 'hidden':'visible';
+  document.getElementById('nav-badge').style.display = qualified ? 'none':'flex';
+
+  // control bar
+  document.getElementById('step-no').textContent = 'ÉTAPE '+s.no+' / 8';
+  document.getElementById('step-hint').textContent = s.hint;
+  const nb = document.getElementById('btn-next');
+  nb.textContent = s.btn;
+  nb.className = 'btn '+s.kind;
+  document.getElementById('btn-back').style.visibility = step===0 ? 'hidden':'visible';
+
+  // progress
+  document.getElementById('progress').style.width = (step/(STEPS.length-1)*100)+'%';
+}
+
+document.getElementById('btn-next').addEventListener('click', ()=>{
+  if(step >= STEPS.length-1){ step = 0; }   // rejouer
+  else { step++; }
+  render();
+  document.querySelector('main.stage').scrollTo({top:0,behavior:'smooth'});
+});
+document.getElementById('btn-back').addEventListener('click', ()=>{
+  if(step>0){ step--; render(); }
+});
+
+// free navigation via sidebar (optional, keeps narrative state)
+document.querySelectorAll('.navitem').forEach(n=>{
+  n.addEventListener('click', ()=> showScreen(n.dataset.screen));
+});
+
+// ---------- ROI calculator ----------
+const slDem = document.getElementById('sl-dem');
+const slPan = document.getElementById('sl-pan');
+const eur = n => Math.round(n).toLocaleString('fr-FR') + ' €';
+function roi(){
+  const dem = +slDem.value, pan = +slPan.value;
+  const perdus = dem * 0.70;            // ~30% signés aujourd'hui
+  const recup  = perdus * 0.27;         // 27% récupérables par relance
+  const caMois = recup * pan;
+  document.getElementById('out-dem').textContent = dem;
+  document.getElementById('out-pan').textContent = eur(pan);
+  document.getElementById('roi-chantiers').textContent = '+'+recup.toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1});
+  document.getElementById('roi-camois').textContent = '+'+eur(caMois);
+  document.getElementById('roi-caan').textContent = '~'+eur(caMois*12);
+}
+slDem.addEventListener('input', roi);
+slPan.addEventListener('input', roi);
+
+roi();
+render();
+</script>
+</body>
+</html>
